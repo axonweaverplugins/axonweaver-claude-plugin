@@ -15,7 +15,7 @@
 В сессии Claude Code:
 
 ```
-/plugin install axonweaver --marketplace axonweaver/axonweaver-claude-plugin
+/plugin install axonweaver --marketplace axonweaverplugins/axonweaver-claude-plugin
 ```
 
 Ответь `y` на добавление каталога, выбери область (user). Плагин спросит:
