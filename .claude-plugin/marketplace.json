@@ -1,0 +1,14 @@
+{
+  "name": "axonweaver",
+  "owner": {
+    "name": "AxonWeaver"
+  },
+  "description": "Плагины AxonWeaver для ИИ-агентов команды.",
+  "plugins": [
+    {
+      "name": "axonweaver",
+      "source": "./",
+      "description": "Руководство агента AxonWeaver по роли, MCP платформы, навыки рабочих мест."
+    }
+  ]
+}

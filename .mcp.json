@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "axonweaver": {
+      "type": "http",
+      "url": "https://admin.axonweaver.ai/api/mcp-server/mcp",
+      "headers": {
+        "Authorization": "Bearer ${user_config.mcp_bearer}",
+        "X-Axon-Key": "${user_config.agent_key}"
+      }
+    }
+  }
+}

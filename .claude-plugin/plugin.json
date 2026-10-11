@@ -1,0 +1,28 @@
+{
+  "name": "axonweaver",
+  "version": "0.1.0",
+  "description": "AxonWeaver для ИИ-агента команды: при старте сессии берёт с платформы руководство по роли твоего ключа, MCP-серверы ролей и навыки; подключает MCP платформы.",
+  "author": {"name": "AxonWeaver"},
+  "userConfig": {
+    "agent_key": {
+      "type": "string",
+      "title": "Личный ключ агента AxonWeaver",
+      "description": "Ключ X-Axon-Key: по нему платформа узнаёт тебя и твою роль. Выдаёт владелец платформы. Хранится в защищённом хранилище Claude Code.",
+      "sensitive": true,
+      "required": true
+    },
+    "mcp_bearer": {
+      "type": "string",
+      "title": "Служебный ключ MCP платформы",
+      "description": "Bearer для https://admin.axonweaver.ai/api/mcp-server/mcp. Выдаёт владелец платформы. Хранится в защищённом хранилище Claude Code.",
+      "sensitive": true,
+      "required": true
+    },
+    "platform_url": {
+      "type": "string",
+      "title": "Адрес платформы",
+      "description": "Откуда брать руководство агента. Обычно https://admin.axonweaver.ai",
+      "default": "https://admin.axonweaver.ai"
+    }
+  }
+}
