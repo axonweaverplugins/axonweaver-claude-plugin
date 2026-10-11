@@ -1,22 +1,24 @@
 {
   "name": "axonweaver",
-  "version": "0.1.0",
-  "description": "AxonWeaver для ИИ-агента команды: при старте сессии берёт с платформы руководство по роли твоего ключа, MCP-серверы ролей и навыки; подключает MCP платформы.",
-  "author": {"name": "AxonWeaver"},
+  "version": "0.2.0",
+  "description": "AxonWeaver для ИИ-агента команды: вход своей учётной записью Keycloak (или ключом агента), при старте сессии — руководство по роли, MCP-серверы ролей и навыки; подключает MCP платформы.",
+  "author": {
+    "name": "AxonWeaver"
+  },
   "userConfig": {
     "agent_key": {
       "type": "string",
       "title": "Личный ключ агента AxonWeaver",
-      "description": "Ключ X-Axon-Key: по нему платформа узнаёт тебя и твою роль. Выдаёт владелец платформы. Хранится в защищённом хранилище Claude Code.",
+      "description": "Не нужен, если входишь своей учётной записью (/axonweaver:login). Иначе — ключ X-Axon-Key от владельца платформы. Хранится в защищённом хранилище Claude Code.",
       "sensitive": true,
-      "required": true
+      "required": false
     },
     "mcp_bearer": {
       "type": "string",
       "title": "Служебный ключ MCP платформы",
-      "description": "Bearer для https://admin.axonweaver.ai/api/mcp-server/mcp. Выдаёт владелец платформы. Хранится в защищённом хранилище Claude Code.",
+      "description": "Не нужен при входе своей учётной записью (/axonweaver:login). Иначе — Bearer MCP-сервера платформы от владельца платформы. Хранится в защищённом хранилище Claude Code.",
       "sensitive": true,
-      "required": true
+      "required": false
     },
     "platform_url": {
       "type": "string",

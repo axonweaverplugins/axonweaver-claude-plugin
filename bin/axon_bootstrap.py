@@ -20,13 +20,14 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 DEFAULT_URL = "https://admin.axonweaver.ai"
 LIMIT = 9500  # a SessionStart hook's context is cut at 10 000 characters
 
 
 def data_dir() -> Path:
-    folder = Path(os.environ.get("CLAUDE_PLUGIN_DATA") or Path.home() / ".claude" / "axonweaver")
+    # one folder for the hook, the commands and the MCP headers helper (the commands' shell has no CLAUDE_PLUGIN_DATA)
+    folder = Path(os.environ.get("AXON_PLUGIN_HOME") or Path.home() / ".claude" / "axonweaver")
     folder.mkdir(parents=True, exist_ok=True)
     try:
         folder.chmod(0o700)
@@ -43,9 +44,13 @@ def keep(path: Path, text: str) -> None:
         pass
 
 
-def fetch(url: str, key: str) -> dict:
-    request = urllib.request.Request(url.rstrip("/") + "/api/agent/bootstrap", headers={
-        "X-Axon-Key": key, "Accept": "application/json", "User-Agent": f"axonweaver-claude-plugin/{VERSION}"})
+def fetch(url: str, key: str, person_token: str = "") -> dict:
+    headers = {"Accept": "application/json", "User-Agent": f"axonweaver-claude-plugin/{VERSION}"}
+    if person_token:
+        headers["Authorization"] = f"Bearer {person_token}"  # the person signed in through Keycloak (/axonweaver:login)
+    else:
+        headers["X-Axon-Key"] = key
+    request = urllib.request.Request(url.rstrip("/") + "/api/agent/bootstrap", headers=headers)
     with urllib.request.urlopen(request, timeout=8) as answer:
         return json.loads(answer.read().decode("utf-8"))
 
@@ -53,7 +58,7 @@ def fetch(url: str, key: str) -> dict:
 def why(exc: Exception) -> str:
     if isinstance(exc, urllib.error.HTTPError):
         if exc.code == 401:
-            return "платформа не приняла ключ агента (401) — проверь ключ в настройках плагина"
+            return "платформа не приняла вход агента (401) — войди заново (/axonweaver:login) или проверь ключ в настройках плагина"
         return f"платформа ответила {exc.code}"
     if isinstance(exc, urllib.error.URLError):
         return f"платформа недоступна ({exc.reason})"
@@ -79,9 +84,17 @@ def hook() -> int:
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     note = ""
     try:
-        if not key:
-            raise RuntimeError("ключ агента не задан — /plugin configure axonweaver@axonweaver (его выдаёт владелец платформы)")
-        bundle = fetch(url, key)
+        person_token = ""
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import axon_auth
+            person_token = axon_auth.access_token()
+        except Exception:  # noqa: BLE001 — no Keycloak sign-in: the key decides
+            person_token = ""
+        if not key and not person_token:
+            raise RuntimeError("агент не вошёл: /axonweaver:login (своя учётная запись AxonWeaver) или ключ агента в "
+                               "/plugin configure axonweaver@axonweaver (его выдаёт владелец платформы)")
+        bundle = fetch(url, key, person_token)
         keep(cache, json.dumps(bundle, ensure_ascii=False))
         keep(guide_path, str(bundle.get("guide") or ""))
         if meta.get("version") and meta["version"] != bundle.get("version"):
@@ -106,6 +119,12 @@ def hook() -> int:
 
 
 def status() -> int:
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import axon_auth
+        axon_auth.whoami()
+    except Exception:  # noqa: BLE001
+        pass
     folder = data_dir()
     cache, meta_path = folder / "bootstrap.json", folder / "meta.json"
     if not cache.exists():

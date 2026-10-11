@@ -6,7 +6,8 @@
       "headers": {
         "Authorization": "Bearer ${user_config.mcp_bearer}",
         "X-Axon-Key": "${user_config.agent_key}"
-      }
+      },
+      "headersHelper": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/axon_auth.py\" headers"
     }
   }
 }
