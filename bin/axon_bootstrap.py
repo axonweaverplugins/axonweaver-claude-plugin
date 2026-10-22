@@ -83,6 +83,14 @@ def hook() -> int:
     url = (os.environ.get("CLAUDE_PLUGIN_OPTION_PLATFORM_URL") or DEFAULT_URL).strip()
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     note = ""
+    # 0.2.1: the MCP header is `Bearer <mcp_bearer>`; a value that already says «Bearer …» makes «Bearer Bearer …»
+    # and the platform answers 401 (vitek1, 2026-10-22). The headersHelper cannot read the option — the hook can.
+    bearer = (os.environ.get("CLAUDE_PLUGIN_OPTION_MCP_BEARER") or "").strip()
+    warnings = []
+    if bearer.lower().startswith("bearer"):
+        warnings.append("⚠ В настройке плагина «Служебный ключ MCP» (mcp_bearer) лишнее слово «Bearer» — MCP платформы "
+                        "ответит 401. Попроси человека: /plugin configure axonweaver@axonweaver → поле mcp_bearer очистить "
+                        "(при входе своей учётной записью) или оставить только сам ключ.")
     try:
         person_token = ""
         try:
@@ -97,6 +105,9 @@ def hook() -> int:
         bundle = fetch(url, key, person_token)
         keep(cache, json.dumps(bundle, ensure_ascii=False))
         keep(guide_path, str(bundle.get("guide") or ""))
+        if person_token and bearer:
+            warnings.append("Плагин вошёл учётной записью Keycloak — служебный ключ MCP (mcp_bearer) не нужен; "
+                            "его можно очистить в /plugin configure axonweaver@axonweaver.")
         if meta.get("version") and meta["version"] != bundle.get("version"):
             note = f"Руководство агента обновилось на платформе: {meta['version']} → {bundle.get('version')}."
         keep(meta_path, json.dumps({"version": bundle.get("version"), "fetched_at": time.time(), "url": url}))
@@ -109,9 +120,13 @@ def hook() -> int:
         else:
             text = (f"⚠ Плагин AxonWeaver установлен, но руководство агента не получено: {reason}. Скажи об этом человеку. "
                     "До исправления держись навыка `axonweaver-basics` этого плагина.")
+            if warnings:
+                text = "\n".join(warnings) + "\n" + text
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": text}},
                              ensure_ascii=False))
             return 0
+    if warnings:
+        note = "\n".join(warnings + ([note] if note else []))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart",
                                              "additionalContext": context(bundle, guide_path, note)}},
                      ensure_ascii=False))
